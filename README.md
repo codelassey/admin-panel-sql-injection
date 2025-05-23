@@ -88,7 +88,7 @@ Here’s the detailed process of how I performed the attack:
      - `--batch`: Automatically answers SQLMap’s prompts with default options.
   3. SQLMap tested the parameters (`happy` and `sad`) for SQL injection vulnerabilities.
 
-### 3.4 Result: Parameters Not Injectable
+### Result: Parameters Not Injectable
 - SQLMap reported:
 
 ![cannot_inject](screenshots/cannot_inject.png)
