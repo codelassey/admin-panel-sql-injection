@@ -224,11 +224,11 @@ Since the login bypass didn’t work, I used DVWA’s SQL Injection module to ex
 Now that I exploited the vulnerability, I’ll suggest ways to fix it so attackers can’t do the same.
 
 ### 1. Input Validation
-- Checking all user inputs to make sure they’re safe before using them in a database query.
+- Checking all user inputs to make sure they’re safe before using them in a database query. Such as making sure the login form only accepts numbers in the USER ID field.
 
 ### 2. Use Parameterized Queries
 - A way to write database queries where user inputs are treated as data, not code.
-- Use prepared statements in PHP:
+- Use a statement like this in PHP:
 ```php
 $stmt = $mysqli->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->bind_param("i", $id); // "i" means integer
