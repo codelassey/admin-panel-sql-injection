@@ -6,7 +6,8 @@ My goal for this project was to **ethically** perform attacks to access a websit
 ---
 
 ## Vulnerability Identified
-- **What did I find?** The `id` parameter in the SQL Injection module (`http://localhost/DVWA/vulnerabilities/sqli/`) was vulnerable to SQL injection.
+- **What did I find?**
+- The `id` parameter in the SQL Injection module (`http://localhost/DVWA/vulnerabilities/sqli/`) was vulnerable to SQL injection.
 - **Details**:
 - The form didn’t sanitize user input, meaning the `id` value was directly inserted into a database query.
 - SQLMap confirmed the vulnerability using techniques like boolean-based blind, error-based, and UNION query injections.
@@ -25,7 +26,7 @@ My goal for this project was to **ethically** perform attacks to access a websit
 ## Environment
 Before I could start hacking, I needed to set up a safe place to practice. I used DVWA, a web application on Metasploitable2 with intentional vulnerabilities for learning. I used my attacker machine (192.168.56.108) to ping the target (192.168.56.104) making sure both systemscould communicate on the same host-only network.
 
-
+![ping](screenshots/ping.png)
 
 ### DVWA Security Level
 - **What’s the security level?** DVWA has different levels (Low, Medium, High, Impossible) that control how easy it is to exploit vulnerabilities.
@@ -34,6 +35,8 @@ Before I could start hacking, I needed to set up a safe place to practice. I use
   1. I logged in to DVWA with `admin/password`.
   2. On the left sidebar, I clicked “DVWA Security”.
   3. I set the security level to **Low** and clicked “Submit”.
+
+![burp](screenshots/burp2.png)
 
 ---
 
@@ -45,12 +48,14 @@ In my Cisco Ethical Hacker course final Capstone CTF Project, I used manual inje
 - **What is Burp Suite?** Burp Suite is a tool for intercepting and analyzing web traffic. It helped me capture requests (like form submissions) to use with SQLMap.
 - **Why did I need it?** I needed to see the exact request a website sends so I could test it for vulnerabilities.
 
+![burp1](screenshots/burp1.png)
+
 ---
 
 ## Attack Process
 Here’s the detailed process of how I performed the attack:
 
-### Attempt a Login Bypass Attack (Failed)
+### Attempted a Login Bypass Attack (Failed)
 - I first tried to bypass the login form using SQL injection. I wanted to log in as `admin` without knowing the password.
 - Many real-world websites have weak login forms, and this attack would show how attackers can exploit them.
 
@@ -63,8 +68,10 @@ Here’s the detailed process of how I performed the attack:
   3. I logged out of DVWA by clicking “Logout”.
   4. I entered test credentials (Username: `happy`, Password: `sad`) and clicked “Login”.
   5. In Burp Suite’s “Proxy” tab, I saw the intercepted request:
-    
-  6. I copied the URL (`http://localhost/DVWA/login.php`) and the parameters. I also noted the `Cookie` value, which included `security=low` and my `PHPSESSID`.
+ 
+     ![login_bypass](screenshots/login_bypass.png)
+
+  7. I copied the URL (`http://localhost/DVWA/login.php`) and the parameters. I also noted the `Cookie` value, which included `security=low` and my `PHPSESSID`.
 
 ### Tested the Login Form with SQLMap
 - I used SQLMap to test if the login form was vulnerable to SQL injection.
@@ -72,7 +79,9 @@ Here’s the detailed process of how I performed the attack:
 - **Steps**:
   1. I opened a terminal.
   2. I ran SQLMap with the captured request:
-    
+ 
+    ![sql_login_bypass](screenshots/sql_login_bypass.png)
+  
      - `-u`: The URL of the login form.
      - `--data`: The parameters sent in the POST request.
      - `--cookie`: The cookie value to keep my session active and security level low.
@@ -81,6 +90,8 @@ Here’s the detailed process of how I performed the attack:
 
 ### 3.4 Result: Parameters Not Injectable
 - SQLMap reported:
+
+![cannot_inject](screenshots/cannot_inject.png)
 
 - SQLMap couldn’t find a way to inject SQL code into the login form. This might have happened because:
      - The login form didn’t return clear error messages for SQLMap to detect vulnerabilities.
@@ -100,6 +111,7 @@ Since the login bypass didn’t work, I used DVWA’s SQL Injection module to ex
 2. On the left sidebar, I clicked “SQL Injection”. This took me to `http://192.168.56.104/DVWA/vulnerabilities/sqli/`.
 3. I saw a form asking for a “User ID”. This form was an **injection point**. A place where I could try to inject SQL code.
 
+![injection](screenshots/sql_injection.png)
  
 ### Request Capture with Burp Suite
 - I submitted a test User ID and captured the request to use with SQLMap.
@@ -109,7 +121,9 @@ Since the login bypass didn’t work, I used DVWA’s SQL Injection module to ex
 2. In the SQL Injection module, I entered a test ID (`1`) and clicked “Submit”.
 3. In Burp Suite’s “Proxy” tab, I found the intercepted request:
    
-4. I noted the URL (`http://localhost/DVWA/vulnerabilities/sqli/?id=1&Submit=Submit`) and the `Cookie` value.
+   ![inject1](screenshots/sql_injection1.png)
+   
+5. I noted the URL (`http://localhost/DVWA/vulnerabilities/sqli/?id=1&Submit=Submit`) and the `Cookie` value.
 
 ### Test for SQL Injection with SQLMap
 - I used SQLMap to check if the `id` parameter was vulnerable to SQL injection.
@@ -130,6 +144,8 @@ Since the login bypass didn’t work, I used DVWA’s SQL Injection module to ex
 - **Error-based**: Using database errors to leak information.
 - **UNION query**: Combining the original query with my own to extract extra data.
 
+![injection2](screenshots/sql_injection2.png)
+
 ### Dumped Database Information
 - I used SQLMap to list all databases on the server.
 - This helped me find the database that DVWA uses, which might contain admin credentials.
@@ -138,10 +154,18 @@ Since the login bypass didn’t work, I used DVWA’s SQL Injection module to ex
 2. SQLMap listed databases, including `dvwa`.
 - The `dvwa` database was likely where DVWA stored its user data.
 
+  ![database](screenshots/database0.png)
+
+  ![database1](screenshots/database1.png)
+
 ### Extracted Tables from the `dvwa` Database
 - I listed the tables in the `dvwa` database.
 - Tables might contain user information, like usernames and passwords.
 - **Steps**:
+
+  ![tables0](screenshots/tables0.png)
+
+  ![tables1](screenshots/tables1.png)
 
 - The `users` table likely contained user credentials, which I needed to access the admin panel.
 
@@ -149,7 +173,10 @@ Since the login bypass didn’t work, I used DVWA’s SQL Injection module to ex
 - I extracted all data from the `users` table.
 - This table might have the admin’s username and password.
 - **Steps**:
-1. I ran:
+  
+  1. I ran:
+
+     ![users](screenshots/users_dump.png)
   
    - `-T users`: Specified the `users` table.
    - `--dump`: Extracted all data from the table.
@@ -174,6 +201,9 @@ Since the login bypass didn’t work, I used DVWA’s SQL Injection module to ex
    ```
 - The admin’s password was `password`. 
 
+     ![crack](screenshots/admin_crack.png)
+
+
 ## Accessing the Admin Panel
 - I used the cracked credentials to log in to DVWA.
 - This completed my objective of accessing the admin panel.
@@ -185,6 +215,8 @@ Since the login bypass didn’t work, I used DVWA’s SQL Injection module to ex
    - Password: `password`
 4. I clicked “Login”. I was taken to the DVWA dashboard with admin access.
 5. As an admin, I could access features like viewing all users or changing the security level.
+
+![admin_access](screenshots/admin_access.png)
 
 ---
 
